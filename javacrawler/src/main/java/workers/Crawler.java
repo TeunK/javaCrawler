@@ -1,0 +1,98 @@
+package workers;
+
+import models.SiteMap;
+import models.WebNode;
+import options.Constants;
+import org.jsoup.nodes.Element;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.core.MediaType;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
+import java.util.logging.Logger;
+import java.util.stream.Collectors;
+
+/**
+ * Created by Teun on 12-12-2017.
+ */
+public class Crawler implements Runnable {
+    private static final Logger logger = Logger.getLogger(Crawler.class.getName());
+    private final Client webClient;
+    private final BlockingQueue<WebNode> workerQueue;
+    private final Set<URL> visitedUrls;
+    private final SiteMap siteMap;
+    private final URL rootUrl;
+    private final long timeoutPeriod = Constants.MS_UNTIL_TIMEOUT;
+    private final Scraper scraper = new Scraper();
+    private final Predicate<WebNode> isInternalUrl;
+
+
+    public Crawler(Client webClient, BlockingQueue<WebNode> workerQueue, Set<URL> visitedUrls, SiteMap siteMap, URL rootUrl) {
+        this.webClient = webClient;
+        this.workerQueue = workerQueue;
+        this.visitedUrls = visitedUrls;
+        this.siteMap = siteMap;
+        this.rootUrl = rootUrl;
+        this.isInternalUrl = url -> url.getRootUrl().getHost().equalsIgnoreCase(rootUrl.getHost());
+    }
+
+    @Override
+    public void run() {
+        while (true) {
+            try{
+                WebNode node = workerQueue.poll(timeoutPeriod, TimeUnit.MILLISECONDS);
+
+                if (node != null) {
+                    if (!visitedUrls.contains(node.getRootUrl())) {
+                        visitedUrls.add(node.getRootUrl());
+                        crawlPage(node);
+                    }
+                } else {
+                    break;
+                }
+            } catch (InterruptedException e) {
+                if (workerQueue.isEmpty())
+                    break;
+            }
+        }
+    }
+
+    private void crawlPage(WebNode node) {
+        String currentUrl = node.getRootUrl().toString();
+
+        String contentBody = webClient.target(currentUrl).request(MediaType.TEXT_HTML).get(String.class);
+
+        List<WebNode> internalChildNodes = scraper.scrape(contentBody).stream()
+                .map(link -> mapElementToWebNode(link))
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .filter(isInternalUrl)
+                .collect(Collectors.toList());
+
+        siteMap.addNode(node, internalChildNodes);
+
+        internalChildNodes.forEach(this::addToWorkerQueue);
+    }
+
+    private Optional<WebNode> mapElementToWebNode(Element link) {
+        String href = link.attr("href");
+        try {
+            return Optional.of(new WebNode(new URL(rootUrl, href)));
+        } catch (MalformedURLException e) {
+            logger.warning("Failed to transform URL: "+href);
+        }
+        return Optional.empty();
+    }
+
+    private void addToWorkerQueue(WebNode webnode) {
+        boolean isAlreadyVisited = visitedUrls.contains(webnode.getRootUrl());
+        boolean isAlreadyQueued = workerQueue.contains(webnode);
+        if (!isAlreadyVisited && !isAlreadyQueued)
+            workerQueue.add(webnode);
+    }
+}
