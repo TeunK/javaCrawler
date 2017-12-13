@@ -31,7 +31,7 @@ public class CrawlerPool {
         this.webClient = webClient;
         this.workerQueue = workerQueue;
         this.executorService = Executors.newFixedThreadPool(parameters.getWorkerCount());
-        visitedUrls.add(parameters.getUrl());
+        workerQueue.add(new WebNode(parameters.getUrl()));
     }
 
     public Future<SiteMap> start() {

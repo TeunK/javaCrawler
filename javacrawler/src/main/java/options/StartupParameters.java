@@ -39,11 +39,17 @@ public class StartupParameters {
     }
 
     public boolean isValid() {
-        boolean isValid = workerCount >= 1 && workerCount <= 20
-                && maxDepth >= 0 && maxDepth <= 20;
+        boolean isValid = true;
 
-        if (!isValid)
-            logger.warning("Parameters provided were invalid");
+        if (workerCount < 1 && workerCount > 100){
+            logger.warning("Number of crawlers provided is invalid. Please select a range from 1 to 100 (inclusive)");
+            isValid = false;
+        }
+
+        if (maxDepth < 0 && maxDepth > 20) {
+            logger.warning("Maximum depth provided is invalid. Please select a range from 1 to 20");
+            isValid = false;
+        }
 
         return isValid;
     }

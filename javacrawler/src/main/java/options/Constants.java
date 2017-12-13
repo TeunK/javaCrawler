@@ -4,11 +4,11 @@ package options;
  * Created by Teun on 12-12-2017.
  */
 public class Constants {
-    public static String DEFAULT_URL = "http://www.monzo.com/";
+    public static String DEFAULT_URL = "https://monzo.com/";
     public static String DEFAULT_OUTPUT_FILE_PATH = "sitemap.txt";
     public static int DEFAULT_CRAWLER_COUNT = 5;
     public static int DEFAULT_DEPTH = 5;
-    public static long MS_UNTIL_TIMEOUT = 100;
+    public static long MS_UNTIL_TIMEOUT = 10;
 
     public static final String CRAWLER_COUNT = "crawlers";
     public static final String CRAWLING_URL = "url";

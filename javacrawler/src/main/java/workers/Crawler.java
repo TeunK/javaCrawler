@@ -4,8 +4,13 @@ import models.SiteMap;
 import models.WebNode;
 import options.Constants;
 import org.jsoup.nodes.Element;
+
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.client.Invocation.Builder;
 import javax.ws.rs.client.Client;
+import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
@@ -65,18 +70,26 @@ public class Crawler implements Runnable {
     private void crawlPage(WebNode node) {
         String currentUrl = node.getRootUrl().toString();
 
-        String contentBody = webClient.target(currentUrl).request(MediaType.TEXT_HTML).get(String.class);
+        try{
+//            String contentBody = webClient.target(currentUrl).request(MediaType.TEXT_HTML).get(String.class);
+            WebTarget webTarget = webClient.target(currentUrl);
+            Builder builder = webTarget.request(MediaType.TEXT_HTML);
+            Response response = builder.get();
+            String output = response.readEntity(String.class);
 
-        List<WebNode> internalChildNodes = scraper.scrape(contentBody).stream()
-                .map(link -> mapElementToWebNode(link))
-                .filter(Optional::isPresent)
-                .map(Optional::get)
-                .filter(isInternalUrl)
-                .collect(Collectors.toList());
+            List<WebNode> internalChildNodes = scraper.scrape(output).stream()
+                    .map(link -> mapElementToWebNode(link))
+                    .filter(Optional::isPresent)
+                    .map(Optional::get)
+                    .filter(isInternalUrl)
+                    .collect(Collectors.toList());
 
-        siteMap.addNode(node, internalChildNodes);
+            siteMap.addNode(node, internalChildNodes);
 
-        internalChildNodes.forEach(this::addToWorkerQueue);
+            internalChildNodes.forEach(this::addToWorkerQueue);
+        } catch (WebApplicationException e) {
+            logger.warning("Failed to reach page\n"+e.getMessage());
+        }
     }
 
     private Optional<WebNode> mapElementToWebNode(Element link) {

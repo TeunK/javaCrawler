@@ -17,19 +17,12 @@ public class OutputWriter {
         this.filePath = filePath;
     }
 
-    public void writeToFile(SiteMap siteMap) throws FileNotFoundException, UnsupportedEncodingException {
-        String outputFileDir = System.getProperty("user.dir")+"/"+filePath;
-
-        // Create file if not yet exists
-        File file = new File(outputFileDir);
-        file.mkdirs();
-
-        // Print each node along with its child nodes
-        PrintWriter printWriter = new PrintWriter(outputFileDir, "UTF-8");
+    public void writeSiteMapToConsole(SiteMap siteMap) throws FileNotFoundException, UnsupportedEncodingException {
         siteMap.getSiteMap().forEach((webNode, childNodes) -> {
-            printWriter.println(webNode.getRootUrl().toString());
-            childNodes.getNodes().stream().forEach(childNode -> printWriter.println("\t"+childNode.toString()));
-            printWriter.println("\n");
+            System.out.println(webNode.getRootUrl().toString());
+            childNodes.getNodes().stream()
+                    .forEach(childNode -> System.out.println("\t"+childNode.toString()));
+            System.out.println();
         });
     }
 }

@@ -1,4 +1,5 @@
 import exceptions.InvalidStartupParametersException;
+import jersey.repackaged.com.google.common.base.Stopwatch;
 import models.SiteMap;
 import models.WebNode;
 import org.apache.commons.cli.*;
@@ -35,17 +36,19 @@ public class App {
 
             BlockingQueue<WebNode> workerQueue = new LinkedBlockingDeque<>();
 
+            Stopwatch stopwatch = Stopwatch.createStarted();
+
             CrawlerPool crawlerPool = new CrawlerPool(startupParameters, webClient, workerQueue);
-
             Future<SiteMap> siteMapFuture = crawlerPool.start();
-
             SiteMap siteMap = siteMapFuture.get();
-
             crawlerPool.stop();
 
-            OutputWriter writer = new OutputWriter(startupParameters.getOutputFilePath());
-            writer.writeToFile(siteMap);
+            stopwatch.stop();
 
+            OutputWriter writer = new OutputWriter(startupParameters.getOutputFilePath());
+            writer.writeSiteMapToConsole(siteMap);
+
+            logger.info("Completed task in " + stopwatch+"\n"+startupParameters.getWorkerCount()+" up to concurrent crawlers were used");
         } catch (ParseException e) {
             logger.warning("Unable to parse startup arguments.");
         } catch (InvalidStartupParametersException e) {
@@ -76,17 +79,17 @@ public class App {
         int maxDepth = Constants.DEFAULT_DEPTH;
 
         // Accept provided startup parameters
-        if (cmd.hasOption(Constants.ARGNAME_URL))
-            url = cmd.getOptionValue(Constants.ARGNAME_URL);
+        if (cmd.hasOption(Constants.CRAWLING_URL))
+            url = cmd.getOptionValue(Constants.CRAWLING_URL);
 
-        if (cmd.hasOption(Constants.ARGNAME_CRAWLERS))
-            crawlerCount = Integer.parseInt(cmd.getOptionValue(Constants.ARGNAME_CRAWLERS));
+        if (cmd.hasOption(Constants.CRAWLER_COUNT))
+            crawlerCount = Integer.parseInt(cmd.getOptionValue(Constants.CRAWLER_COUNT));
 
-        if (cmd.hasOption(Constants.ARGNAME_DEPTH))
-            maxDepth = Integer.parseInt(cmd.getOptionValue(Constants.ARGNAME_DEPTH));
+        if (cmd.hasOption(Constants.CRAWLING_DEPTH))
+            maxDepth = Integer.parseInt(cmd.getOptionValue(Constants.CRAWLING_DEPTH));
 
-        if (cmd.hasOption(Constants.ARGNAME_OUTPUT_FILE_PATH))
-            outputFilePath = cmd.getOptionValue(cmd.getOptionValue(Constants.OUTPUT_FILE_PATH));
+        if (cmd.hasOption(Constants.OUTPUT_FILE_PATH))
+            outputFilePath = cmd.getOptionValue(Constants.OUTPUT_FILE_PATH);
 
         StartupParameters startupParameters = new StartupParameters(url, crawlerCount, maxDepth, outputFilePath);
 
