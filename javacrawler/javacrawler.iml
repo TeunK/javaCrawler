@@ -54,13 +54,12 @@
     <orderEntry type="library" scope="TEST" name="Maven: net.minidev:json-smart:2.2.1" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: net.minidev:accessors-smart:1.1" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: org.ow2.asm:asm:5.0.3" level="project" />
-    <orderEntry type="library" name="Maven: org.slf4j:slf4j-api:1.7.12" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: org.slf4j:slf4j-api:1.7.12" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: net.sf.jopt-simple:jopt-simple:4.9" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: org.apache.commons:commons-lang3:3.4" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: com.flipkart.zjsonpatch:zjsonpatch:0.2.1" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: org.apache.commons:commons-collections4:4.0" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: com.github.jknack:handlebars:4.0.6" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: org.antlr:antlr4-runtime:4.5.1-1" level="project" />
-    <orderEntry type="library" name="Maven: org.slf4j:slf4j-simple:1.7.24" level="project" />
   </component>
 </module>
