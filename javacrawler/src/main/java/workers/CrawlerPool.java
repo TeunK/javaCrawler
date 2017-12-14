@@ -31,6 +31,8 @@ public class CrawlerPool {
         this.webClient = webClient;
         this.workerQueue = workerQueue;
         this.executorService = Executors.newFixedThreadPool(parameters.getWorkerCount());
+
+        // Immediately add the start node to the pool (root url)
         workerQueue.add(new WebNode(parameters.getUrl()));
     }
 
@@ -44,7 +46,7 @@ public class CrawlerPool {
                 ));
             }
 
-            futures.stream().forEach(future -> {
+            futures.forEach(future -> {
                 try {
                     future.get();
                 } catch (InterruptedException e) {

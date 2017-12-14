@@ -36,7 +36,6 @@ public class Crawler implements Runnable {
     private final Scraper scraper = new Scraper();
     private final Predicate<WebNode> isInternalUrl;
 
-
     public Crawler(Client webClient, BlockingQueue<WebNode> workerQueue, Set<URL> visitedUrls, SiteMap siteMap, URL rootUrl) {
         this.webClient = webClient;
         this.workerQueue = workerQueue;
@@ -71,7 +70,6 @@ public class Crawler implements Runnable {
         String currentUrl = node.getRootUrl().toString();
 
         try{
-//            String contentBody = webClient.target(currentUrl).request(MediaType.TEXT_HTML).get(String.class);
             WebTarget webTarget = webClient.target(currentUrl);
             Builder builder = webTarget.request(MediaType.TEXT_HTML);
             Response response = builder.get();

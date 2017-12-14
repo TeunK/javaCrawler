@@ -28,7 +28,6 @@ public class App {
     private static final Logger logger = Logger.getLogger(App.class.getName());
 
     public static void main(String[] args) {
-
         try {
             StartupParameters startupParameters = getStartupParameters(args);
 
@@ -48,7 +47,7 @@ public class App {
             OutputWriter writer = new OutputWriter(startupParameters.getOutputFilePath());
             writer.writeSiteMapToConsole(siteMap);
 
-            logger.info("Completed task in " + stopwatch+"\n"+startupParameters.getWorkerCount()+" up to concurrent crawlers were used");
+            logger.info("Completed task in " + stopwatch);
         } catch (ParseException e) {
             logger.warning("Unable to parse startup arguments.");
         } catch (InvalidStartupParametersException e) {
