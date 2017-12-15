@@ -1,8 +1,8 @@
-package workers;
+package crawlerApp.workers;
 
-import models.SiteMap;
-import models.WebNode;
-import options.StartupParameters;
+import crawlerApp.models.SiteMap;
+import crawlerApp.models.WebNode;
+import crawlerApp.options.StartupParameters;
 
 import javax.ws.rs.client.Client;
 import java.net.URL;

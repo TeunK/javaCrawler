@@ -1,8 +1,8 @@
-package workers;
+package crawlerApp.workers;
 
-import models.SiteMap;
-import models.WebNode;
-import options.Constants;
+import crawlerApp.models.SiteMap;
+import crawlerApp.models.WebNode;
+import crawlerApp.options.Constants;
 import org.jsoup.nodes.Element;
 
 import javax.ws.rs.WebApplicationException;

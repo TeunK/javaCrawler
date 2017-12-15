@@ -1,13 +1,13 @@
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
-import models.ChildNodes;
-import models.SiteMap;
-import models.WebNode;
-import options.StartupParameters;
+import crawlerApp.models.ChildNodes;
+import crawlerApp.models.SiteMap;
+import crawlerApp.models.WebNode;
+import crawlerApp.options.StartupParameters;
 import org.glassfish.jersey.client.JerseyClientBuilder;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import workers.Crawler;
+import crawlerApp.workers.Crawler;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -43,8 +43,20 @@ public class CrawlerTest {
 
     @Test
     public void receivedValidOptionsTest() throws MalformedURLException {
-        StartupParameters parameters = new StartupParameters("http://somewebsite.com", 1, 100, "result.txt");
+        StartupParameters parameters = new StartupParameters("http://somewebsite.com", 1, 15, "result.txt");
         assertThat(parameters.isValid(), is(true));
+    }
+
+    @Test
+    public void receivedInvalidOptionsDueToZeroWorkersTest() throws MalformedURLException {
+        StartupParameters parameters = new StartupParameters("http://somewebsite.com", 0, 15, "result.txt");
+        assertThat(parameters.isValid(), is(false));
+    }
+
+    @Test
+    public void receivedInvalidOptionsDueToTooManyWorkersTest() throws MalformedURLException {
+        StartupParameters parameters = new StartupParameters("http://somewebsite.com", 999, 15, "result.txt");
+        assertThat(parameters.isValid(), is(false));
     }
 
     @Test

@@ -1,13 +1,17 @@
-import exceptions.InvalidStartupParametersException;
+package crawlerApp;
+
+import crawlerApp.exceptions.InvalidStartupParametersException;
+import crawlerApp.options.Constants;
+import crawlerApp.options.OptionsFactory;
+import crawlerApp.options.StartupParameters;
 import jersey.repackaged.com.google.common.base.Stopwatch;
-import models.SiteMap;
-import models.WebNode;
+import crawlerApp.models.SiteMap;
+import crawlerApp.models.WebNode;
 import org.apache.commons.cli.*;
-import options.*;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.ClientProperties;
 import org.glassfish.jersey.client.JerseyClientBuilder;
-import workers.CrawlerPool;
+import crawlerApp.workers.CrawlerPool;
 
 import javax.ws.rs.client.Client;
 import java.io.FileNotFoundException;
@@ -46,6 +50,7 @@ public class App {
 
             OutputWriter writer = new OutputWriter(startupParameters.getOutputFilePath());
             writer.writeSiteMapToConsole(siteMap);
+            writer.writeSiteMapToFile(siteMap);
 
             logger.info("Completed task in " + stopwatch);
         } catch (ParseException e) {

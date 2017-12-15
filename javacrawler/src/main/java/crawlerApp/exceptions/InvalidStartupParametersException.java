@@ -1,4 +1,4 @@
-package exceptions;
+package crawlerApp.exceptions;
 
 /**
  * Created by Teun on 12-12-2017.

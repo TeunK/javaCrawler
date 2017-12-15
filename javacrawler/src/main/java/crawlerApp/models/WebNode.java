@@ -1,7 +1,6 @@
-package models;
+package crawlerApp.models;
 
 import java.net.URL;
-import java.util.ArrayList;
 
 /**
  * Created by Teun on 12-12-2017.

@@ -1,4 +1,4 @@
-package options;
+package crawlerApp.options;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -41,12 +41,12 @@ public class StartupParameters {
     public boolean isValid() {
         boolean isValid = true;
 
-        if (workerCount < 1 && workerCount > 100){
+        if (workerCount < 1 || workerCount > 100){
             logger.warning("Number of crawlers provided is invalid. Please select a range from 1 to 100 (inclusive)");
             isValid = false;
         }
 
-        if (maxDepth < 0 && maxDepth > 20) {
+        if (maxDepth < 0 || maxDepth > 20) {
             logger.warning("Maximum depth provided is invalid. Please select a range from 1 to 20");
             isValid = false;
         }

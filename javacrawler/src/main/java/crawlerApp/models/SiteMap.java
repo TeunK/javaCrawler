@@ -1,4 +1,4 @@
-package models;
+package crawlerApp.models;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;

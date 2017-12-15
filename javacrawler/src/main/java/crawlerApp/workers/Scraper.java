@@ -1,4 +1,4 @@
-package workers;
+package crawlerApp.workers;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;

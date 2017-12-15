@@ -1,4 +1,4 @@
-package options;
+package crawlerApp.options;
 
 /**
  * Created by Teun on 12-12-2017.
