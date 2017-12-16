@@ -12,11 +12,12 @@ import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.ClientProperties;
 import org.glassfish.jersey.client.JerseyClientBuilder;
 import crawlerApp.workers.CrawlerPool;
+import sun.misc.IOUtils;
 
 import javax.ws.rs.client.Client;
-import java.io.FileNotFoundException;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 import java.net.MalformedURLException;
+import java.nio.charset.Charset;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -48,9 +49,10 @@ public class App {
 
             stopwatch.stop();
 
-            OutputWriter writer = new OutputWriter(startupParameters.getOutputFilePath());
+            OutputWriter writer = new OutputWriter();
             writer.writeSiteMapToConsole(siteMap);
-            writer.writeSiteMapToFile(siteMap);
+            writer.writeSiteMapToFile(siteMap, startupParameters.getOutputFilePath());
+            writer.generateVisualWebGraph(siteMap, Constants.DEFAULT_OUTPUT_HTML_PATH);
 
             logger.info("Completed task in " + stopwatch);
         } catch (ParseException e) {

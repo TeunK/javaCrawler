@@ -6,9 +6,11 @@ package crawlerApp.options;
 public class Constants {
     public static String DEFAULT_URL = "https://monzo.com/";
     public static String DEFAULT_OUTPUT_FILE_PATH = "sitemap.txt";
-    public static int DEFAULT_CRAWLER_COUNT = 5;
+    public static String DEFAULT_OUTPUT_HTML_PATH = "visualised.html";
+    public static int DEFAULT_CRAWLER_COUNT = 25;
     public static int DEFAULT_DEPTH = 5;
-    public static long MS_UNTIL_TIMEOUT = 10;
+    public static long MS_UNTIL_TIMEOUT = 10000;
+    public static final String IMAGE_PATTERN = "([^\\s]+(\\.(?i)(jpg|jpeg|png|gif|bmp|JPG|JPEG|PNG|GIF|BMP))$)";
 
     public static final String CRAWLER_COUNT = "crawlers";
     public static final String CRAWLING_URL = "url";
