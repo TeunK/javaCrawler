@@ -1,5 +1,6 @@
 package crawlerApp.workers;
 
+import com.sun.javaws.exceptions.InvalidArgumentException;
 import crawlerApp.models.SiteMap;
 import crawlerApp.models.WebNode;
 import crawlerApp.options.Constants;
@@ -20,6 +21,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -35,6 +37,8 @@ public class Crawler implements Runnable {
     private final long timeoutPeriod = Constants.MS_UNTIL_TIMEOUT;
     private final Scraper scraper = new Scraper();
     private final Predicate<WebNode> isInternalUrl;
+    private final Pattern nonHtmlPattern = Pattern.compile(Constants.IMAGE_PATTERN);
+    private final Predicate<WebNode> isHtmlPattern;
 
     public Crawler(Client webClient, BlockingQueue<WebNode> workerQueue, Set<URL> visitedUrls, SiteMap siteMap, URL rootUrl) {
         this.webClient = webClient;
@@ -43,6 +47,7 @@ public class Crawler implements Runnable {
         this.siteMap = siteMap;
         this.rootUrl = rootUrl;
         this.isInternalUrl = url -> url.getRootUrl().getHost().equalsIgnoreCase(rootUrl.getHost());
+        this.isHtmlPattern = url -> !nonHtmlPattern.matcher(url.getRootUrl().getHost()).matches();
     }
 
     @Override
@@ -80,13 +85,17 @@ public class Crawler implements Runnable {
                     .filter(Optional::isPresent)
                     .map(Optional::get)
                     .filter(isInternalUrl)
+                    .filter(isHtmlPattern)
                     .collect(Collectors.toList());
-
             siteMap.addNode(node, internalChildNodes);
 
             internalChildNodes.forEach(this::addToWorkerQueue);
         } catch (WebApplicationException e) {
-            logger.warning("Failed to reach page\n"+e.getMessage());
+            logger.warning("Failed to reach page\n" + e.getMessage());
+        }  catch (IllegalArgumentException e) {
+            logger.info("Excluding non-html page from results: " +node.getRootUrl());
+        }  catch (Exception e) {
+            logger.info(e.getMessage());
         }
     }
 
