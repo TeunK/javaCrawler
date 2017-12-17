@@ -42,6 +42,7 @@ public class OutputWriter {
             }));
 
             logger.info("Written sitemap text output to "+filePath);
+            System.out.println("Written sitemap text output to "+filePath);
 
             fileWriter.flush();
             printWriter.flush();
@@ -72,17 +73,9 @@ public class OutputWriter {
             outputStream.close();
 
             logger.info("Written sitemap visual output to "+filePath);
+            System.out.println("Written sitemap visual output to "+filePath);
         } catch (IOException e) {
             e.printStackTrace();
         }
-    }
-
-    private String getTemplateHtml(BufferedReader buffIn) throws IOException {
-        StringBuilder sb = new StringBuilder();
-        String line;
-        while( (line = buffIn.readLine()) != null) {
-            sb.append(line);
-        }
-        return sb.toString();
     }
 }

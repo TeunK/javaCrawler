@@ -11,8 +11,8 @@ public class OptionsFactory {
         Options options = new Options();
         options.addOption(getDefaultCrawlersCountOption());
         options.addOption(getDefaultUrlOption());
-        options.addOption(getDefaultDepthOption());
         options.addOption(getDefaultOutputFileOption());
+        options.addOption(getDefaultOutputHtmlOption());
         return options;
     }
 
@@ -34,11 +34,11 @@ public class OptionsFactory {
                 .build();
     }
 
-    private Option getDefaultDepthOption() {
+    private Option getDefaultOutputHtmlOption() {
         return Option.builder()
-                .argName(Constants.ARGNAME_DEPTH)
-                .desc(Constants.DESC_DEPTH)
-                .longOpt(Constants.CRAWLING_DEPTH)
+                .argName(Constants.ARGNAME_OUTPUT_HTML_PATH)
+                .desc(Constants.DESC_OUTPUT_HTML_PATH)
+                .longOpt(Constants.OUTPUT_HTML_PATH)
                 .hasArg(true)
                 .build();
     }

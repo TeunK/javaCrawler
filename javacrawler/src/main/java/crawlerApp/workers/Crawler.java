@@ -1,6 +1,5 @@
 package crawlerApp.workers;
 
-import com.sun.javaws.exceptions.InvalidArgumentException;
 import crawlerApp.models.SiteMap;
 import crawlerApp.models.WebNode;
 import crawlerApp.options.Constants;
@@ -47,7 +46,7 @@ public class Crawler implements Runnable {
         this.siteMap = siteMap;
         this.rootUrl = rootUrl;
         this.isInternalUrl = url -> url.getRootUrl().getHost().equalsIgnoreCase(rootUrl.getHost());
-        this.isHtmlPattern = url -> !nonHtmlPattern.matcher(url.getRootUrl().getHost()).matches();
+        this.isHtmlPattern = url -> !nonHtmlPattern.matcher(url.getRootUrl().toString()).matches();
     }
 
     @Override
@@ -62,9 +61,11 @@ public class Crawler implements Runnable {
                         crawlPage(node);
                     }
                 } else {
+                    // If polling the queue timed out, assume all workers are done submitting their work to the queue and the task is done.
                     break;
                 }
             } catch (InterruptedException e) {
+                // (Polling the blocking queue was interrupted)
                 if (workerQueue.isEmpty())
                     break;
             }
@@ -81,7 +82,7 @@ public class Crawler implements Runnable {
             String output = response.readEntity(String.class);
 
             List<WebNode> internalChildNodes = scraper.scrape(output).stream()
-                    .map(link -> mapElementToWebNode(link))
+                    .map(this::mapElementToWebNode)
                     .filter(Optional::isPresent)
                     .map(Optional::get)
                     .filter(isInternalUrl)
@@ -91,7 +92,7 @@ public class Crawler implements Runnable {
 
             internalChildNodes.forEach(this::addToWorkerQueue);
         } catch (WebApplicationException e) {
-            logger.warning("Failed to reach page\n" + e.getMessage());
+            logger.info("Failed to reach page\n" + e.getMessage());
         }  catch (IllegalArgumentException e) {
             logger.info("Excluding non-html page from results: " +node.getRootUrl());
         }  catch (Exception e) {
@@ -104,7 +105,7 @@ public class Crawler implements Runnable {
         try {
             return Optional.of(new WebNode(new URL(rootUrl, href)));
         } catch (MalformedURLException e) {
-            logger.warning("Failed to transform URL: "+href);
+            logger.info("Failed to transform URL: "+href);
         }
         return Optional.empty();
     }

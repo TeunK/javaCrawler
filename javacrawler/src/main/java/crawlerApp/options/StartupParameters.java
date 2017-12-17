@@ -1,5 +1,7 @@
 package crawlerApp.options;
 
+import crawlerApp.exceptions.InvalidStartupParametersException;
+
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.logging.Logger;
@@ -12,14 +14,16 @@ public class StartupParameters {
 
     private final URL url;
     private final int workerCount;
-    private final int maxDepth;
     private final String outputFilePath;
+    private final String outputHtmlPath;
 
-    public StartupParameters(String url, int workerCount, int maxDepth, String outputFilePath) throws MalformedURLException {
+    public StartupParameters(String url, int workerCount, String outputHtmlPath, String outputFilePath) throws MalformedURLException, InvalidStartupParametersException {
         this.url = new URL((url.endsWith("/")) ? url : String.format("%s/", url));
         this.workerCount = workerCount;
-        this.maxDepth = maxDepth;
         this.outputFilePath = outputFilePath;
+        this.outputHtmlPath = outputHtmlPath;
+
+        if (!isValid()) throw new InvalidStartupParametersException("The provided input parameters were invalid");
     }
 
     public URL getUrl() {
@@ -30,24 +34,23 @@ public class StartupParameters {
         return workerCount;
     }
 
-    public int getMaxDepth() {
-        return maxDepth;
-    }
-
     public String getOutputFilePath() {
         return outputFilePath;
+    }
+
+    public String getOutputHtmlPath() {
+        return outputHtmlPath;
     }
 
     public boolean isValid() {
         boolean isValid = true;
 
-        if (workerCount < 1 || workerCount > 100){
+        if (workerCount < 1
+                || outputHtmlPath == null
+                || outputHtmlPath.isEmpty()
+                || outputFilePath == null
+                || outputFilePath.isEmpty()){
             logger.warning("Number of crawlers provided is invalid. Please select a range from 1 to 100 (inclusive)");
-            isValid = false;
-        }
-
-        if (maxDepth < 0 || maxDepth > 20) {
-            logger.warning("Maximum depth provided is invalid. Please select a range from 1 to 20");
             isValid = false;
         }
 

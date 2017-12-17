@@ -1,4 +1,6 @@
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
+import crawlerApp.LogHandler;
+import crawlerApp.exceptions.InvalidStartupParametersException;
 import crawlerApp.models.ChildNodes;
 import crawlerApp.models.SiteMap;
 import crawlerApp.models.WebNode;
@@ -8,12 +10,15 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import crawlerApp.workers.Crawler;
+import org.junit.rules.ExpectedException;
 
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.logging.Level;
+
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static org.hamcrest.CoreMatchers.notNullValue;
@@ -31,33 +36,45 @@ public class CrawlerTest {
 
     @Rule
     public WireMockRule wireMockRule = new WireMockRule(wireMockConfig().port(8080));
+
+    @Rule
+    public final ExpectedException exception = ExpectedException.none();
+
     private static String localhost = "http://localhost:8080";
 
 
     @Before
     public void setUp() throws MalformedURLException {
+        LogHandler.setLogLevel(Level.WARNING);
         workerQueue = new LinkedBlockingQueue<>();
         visitedUrls = Collections.synchronizedSet(new HashSet<>());
         siteMap = new SiteMap();
     }
 
     @Test
-    public void receivedValidOptionsTest() throws MalformedURLException {
-        StartupParameters parameters = new StartupParameters("http://somewebsite.com", 1, 15, "result.txt");
+    public void receivedValidOptionsTest() throws MalformedURLException, InvalidStartupParametersException {
+        StartupParameters parameters = new StartupParameters("http://somewebsite.com", 1, "visual.html", "result.txt");
         assertThat(parameters.isValid(), is(true));
     }
 
     @Test
-    public void receivedInvalidOptionsDueToZeroWorkersTest() throws MalformedURLException {
-        StartupParameters parameters = new StartupParameters("http://somewebsite.com", 0, 15, "result.txt");
-        assertThat(parameters.isValid(), is(false));
+    public void invalidStartupParametersExceptionDueToZeroWorkersTest() throws MalformedURLException, InvalidStartupParametersException {
+        exception.expect(InvalidStartupParametersException.class);
+        StartupParameters parameters = new StartupParameters("http://somewebsite.com", 0, "visual.html", "result.txt");
     }
 
     @Test
-    public void receivedInvalidOptionsDueToTooManyWorkersTest() throws MalformedURLException {
-        StartupParameters parameters = new StartupParameters("http://somewebsite.com", 999, 15, "result.txt");
-        assertThat(parameters.isValid(), is(false));
+    public void invalidStartupParametersExceptionDueToInvalidOutputFileTest() throws MalformedURLException, InvalidStartupParametersException {
+        exception.expect(InvalidStartupParametersException.class);
+        StartupParameters parameters = new StartupParameters("http://somewebsite.com", 1, "visual.html", "");
     }
+
+    @Test
+    public void invalidStartupParametersExceptionDueToInvalidVisualFileTest() throws MalformedURLException, InvalidStartupParametersException {
+        exception.expect(InvalidStartupParametersException.class);
+        StartupParameters parameters = new StartupParameters("http://somewebsite.com", 1, "", "result.txt");
+    }
+
 
     @Test
     public void visitUrlSuccessfullyTest() throws MalformedURLException {
@@ -178,7 +195,7 @@ public class CrawlerTest {
     public void doesNotVisitExternalDomains() throws MalformedURLException {
         WebPage page1 = new WebPage(localhost, "/");
 
-        stubUrlWithWebpage(page1.getPageName(), "<a href='http://fakethirdpartyhost.com'>click here</a>");
+        stubUrlWithWebpage(page1.getPageName(), "<a href='http://externaldomain.com'>click here</a>");
 
         workerQueue.add(page1.getWebNode());
 
@@ -220,6 +237,60 @@ public class CrawlerTest {
         ChildNodes childNodes2 = siteMap.getSiteMap().get(page2.getWebNode());
         assertThat(childNodes2.getNodes().size(), is(1));
         assertThat(childNodes2.getNodes().contains(page1.getWebNode()), is(true));
+    }
+
+    @Test
+    public void setsZeroChildrenFor404Pages() throws Exception {
+        WebPage page = new WebPage(localhost, "/");
+        WebPage page2 = new WebPage(localhost, "/2");
+
+        stubUrlWithWebpage(page.getPageName(), "<a href='/2'>click here</a>");
+        stubFor(
+                get(urlEqualTo("/2"))
+                .willReturn(aResponse().withStatus(404))
+        );
+        workerQueue.add(page.getWebNode());
+
+        worker = new Crawler(JerseyClientBuilder.createClient(), workerQueue, visitedUrls, siteMap, page.getUrl());
+        worker.run();
+
+        verify(1, getRequestedFor(urlPathEqualTo("/")));
+        verify(1, getRequestedFor(urlPathEqualTo("/2")));
+        assertThat(workerQueue.size(), is(0));
+        assertThat(siteMap.getSiteMap().size(), is(2));
+        assertThat(siteMap.getSiteMap().get(page.getWebNode()).getNodes().size(), is(1));
+        assertThat(siteMap.getSiteMap().get(page2.getWebNode()).getNodes().size(), is(0));
+    }
+
+    @Test
+    public void doesNotUrlWithImageFileExtensionTest() throws Exception {
+        WebPage page = new WebPage(localhost, "/");
+        WebPage page2 = new WebPage(localhost, "/image1.jpg");
+        WebPage page3 = new WebPage(localhost, "/image2.jpeg");
+        WebPage page4 = new WebPage(localhost, "/image3.png");
+        WebPage page5 = new WebPage(localhost, "/image4.gif");
+        WebPage page6 = new WebPage(localhost, "/image5.bmp");
+
+        stubUrlWithWebpage(page.getPageName(), "<a href='/image1.jpg'></a><a href='/image2.jpeg'></a><a href='/image3.png'></a><a href='/image4.gif'></a><a href='/image5.bmp'></a>");
+        stubUrlWithWebpage(page2.getPageName(), "110010101101010101");
+        stubUrlWithWebpage(page3.getPageName(), "110010101101010101");
+        stubUrlWithWebpage(page4.getPageName(), "110010101101010101");
+        stubUrlWithWebpage(page5.getPageName(), "110010101101010101");
+        stubUrlWithWebpage(page6.getPageName(), "110010101101010101");
+
+        workerQueue.add(page.getWebNode());
+        worker = new Crawler(JerseyClientBuilder.createClient(), workerQueue, visitedUrls, siteMap, page.getUrl());
+        worker.run();
+
+        verify(1, getRequestedFor(urlPathEqualTo(page.getPageName())));
+        verify(0, getRequestedFor(urlPathEqualTo(page2.getPageName())));
+        verify(0, getRequestedFor(urlPathEqualTo(page3.getPageName())));
+        verify(0, getRequestedFor(urlPathEqualTo(page4.getPageName())));
+        verify(0, getRequestedFor(urlPathEqualTo(page5.getPageName())));
+        verify(0, getRequestedFor(urlPathEqualTo(page6.getPageName())));
+        assertThat(workerQueue.size(), is(0));
+        assertThat(siteMap.getSiteMap().size(), is(1));
+        assertThat(siteMap.getSiteMap().get(page.getWebNode()).getNodes().size(), is(0));
     }
 
     private void stubUrlWithWebpage(String url, String contentBody) {

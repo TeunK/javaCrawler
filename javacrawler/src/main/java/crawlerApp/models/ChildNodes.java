@@ -8,12 +8,10 @@ import java.util.concurrent.ConcurrentHashMap;
  * Created by Teun on 12-12-2017.
  */
 public class ChildNodes {
-    private final WebNode parentNode;
     private final Set<WebNode> childNodes = ConcurrentHashMap.newKeySet();
 
-    public ChildNodes(WebNode parentNode, List<WebNode> childNodes) {
-        this.parentNode = parentNode;
-        childNodes.forEach(this.childNodes::add);
+    ChildNodes(List<WebNode> childNodes) {
+        this.childNodes.addAll(childNodes);
     }
 
     public Set<WebNode> getNodes(){

@@ -13,7 +13,7 @@ public class SiteMap {
     private final Map<WebNode, ChildNodes> pages = new ConcurrentHashMap<>();
 
     public void addNode(WebNode node, List<WebNode> childNodes) {
-        pages.put(node, new ChildNodes(node, childNodes));
+        pages.put(node, new ChildNodes(childNodes));
     }
 
     public Map<WebNode, ChildNodes> getSiteMap() {
@@ -22,13 +22,13 @@ public class SiteMap {
 
     public String toJsonString() {
 
-        Map<WebNode, Integer> webnodeIdMap = new HashMap<WebNode, Integer>();
+        Map<WebNode, Integer> webNodeIdMap = new HashMap<>();
         List<Edge> edges = new ArrayList<>();
 
         int index = 0;
-        // Create store of Webnode -> Index mapping
+        // Create store of WebNode -> Index mapping
         for (WebNode webNode : pages.keySet()) {
-            webnodeIdMap.put(webNode, index++);
+            webNodeIdMap.put(webNode, index++);
         }
 
         // Map each edge from parentWebNode -> childWebNode to their assigned Index
@@ -36,11 +36,11 @@ public class SiteMap {
             WebNode parentNode = parentChildRelationshipSet.getKey();
             Set<WebNode> childNodes = parentChildRelationshipSet.getValue().getNodes();
 
-            if (webnodeIdMap.containsKey(parentNode)){
-                int parentWebNodeId = webnodeIdMap.get(parentNode);
+            if (webNodeIdMap.containsKey(parentNode)){
+                int parentWebNodeId = webNodeIdMap.get(parentNode);
                 for (WebNode childNode : childNodes) {
-                    if (webnodeIdMap.containsKey(childNode)) {
-                        edges.add(new Edge(parentWebNodeId, webnodeIdMap.get(childNode)));
+                    if (webNodeIdMap.containsKey(childNode)) {
+                        edges.add(new Edge(parentWebNodeId, webNodeIdMap.get(childNode)));
                     } else {
                         logger.info("Could not find index for node " + childNode.getRootUrl());
                     }
@@ -53,9 +53,9 @@ public class SiteMap {
         StringBuilder sb = new StringBuilder();
 
         sb.append("{ nodes: [");
-        pages.keySet().forEach(parentWebNode -> sb.append("{name:\""+ parentWebNode.toString() +"\" },"));
+        pages.keySet().forEach(parentWebNode -> sb.append("{name:\"").append(parentWebNode.toString()).append("\" },"));
         sb.append("], edges: [");
-        edges.forEach(edge -> sb.append("{source:"+edge.getParent()+",target:"+edge.getChild()+"},"));
+        edges.forEach(edge -> sb.append("{source:").append(edge.getParent()).append(",target:").append(edge.getChild()).append("},"));
         sb.append("]}");
 
         return sb.toString();
@@ -65,16 +65,16 @@ public class SiteMap {
         private int parent;
         private int child;
 
-        public Edge(int parent, int child) {
+        Edge(int parent, int child) {
             this.parent = parent;
             this.child = child;
         }
 
-        public int getParent() {
+        int getParent() {
             return parent;
         }
 
-        public int getChild() {
+        int getChild() {
             return child;
         }
     }

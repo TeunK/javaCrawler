@@ -12,16 +12,15 @@ import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.ClientProperties;
 import org.glassfish.jersey.client.JerseyClientBuilder;
 import crawlerApp.workers.CrawlerPool;
-import sun.misc.IOUtils;
 
 import javax.ws.rs.client.Client;
 import java.io.*;
 import java.net.MalformedURLException;
-import java.nio.charset.Charset;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingDeque;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -33,8 +32,11 @@ public class App {
     private static final Logger logger = Logger.getLogger(App.class.getName());
 
     public static void main(String[] args) {
+        LogHandler.setLogLevel(Level.WARNING);
+
         try {
             StartupParameters startupParameters = getStartupParameters(args);
+            showStartupMessage(startupParameters);
 
             Client webClient = JerseyClientBuilder.createClient(new ClientConfig().property(ClientProperties.FOLLOW_REDIRECTS, true));
 
@@ -49,12 +51,9 @@ public class App {
 
             stopwatch.stop();
 
-            OutputWriter writer = new OutputWriter();
-            writer.writeSiteMapToConsole(siteMap);
-            writer.writeSiteMapToFile(siteMap, startupParameters.getOutputFilePath());
-            writer.generateVisualWebGraph(siteMap, Constants.DEFAULT_OUTPUT_HTML_PATH);
+            writeOutput(new OutputWriter(), siteMap, startupParameters);
 
-            logger.info("Completed task in " + stopwatch);
+            logger.info("Completed crawling in " + stopwatch);
         } catch (ParseException e) {
             logger.warning("Unable to parse startup arguments.");
         } catch (InvalidStartupParametersException e) {
@@ -78,11 +77,11 @@ public class App {
         CommandLineParser parser = new DefaultParser();
         CommandLine cmd = parser.parse(startupOptions, args);
 
-        // Set default values
+        // (Initially) assign default values
         String url = Constants.DEFAULT_URL;
         String outputFilePath = Constants.DEFAULT_OUTPUT_FILE_PATH;
+        String outputHtmlPath = Constants.DEFAULT_OUTPUT_HTML_PATH;
         int crawlerCount = Constants.DEFAULT_CRAWLER_COUNT;
-        int maxDepth = Constants.DEFAULT_DEPTH;
 
         // Accept provided startup parameters
         if (cmd.hasOption(Constants.CRAWLING_URL))
@@ -91,17 +90,28 @@ public class App {
         if (cmd.hasOption(Constants.CRAWLER_COUNT))
             crawlerCount = Integer.parseInt(cmd.getOptionValue(Constants.CRAWLER_COUNT));
 
-        if (cmd.hasOption(Constants.CRAWLING_DEPTH))
-            maxDepth = Integer.parseInt(cmd.getOptionValue(Constants.CRAWLING_DEPTH));
-
         if (cmd.hasOption(Constants.OUTPUT_FILE_PATH))
             outputFilePath = cmd.getOptionValue(Constants.OUTPUT_FILE_PATH);
 
-        StartupParameters startupParameters = new StartupParameters(url, crawlerCount, maxDepth, outputFilePath);
+        if (cmd.hasOption(Constants.OUTPUT_HTML_PATH))
+            outputHtmlPath = cmd.getOptionValue(Constants.OUTPUT_HTML_PATH);
 
-        if (!startupParameters.isValid())
-            throw new InvalidStartupParametersException("The provided input parameters were invalid");
+        return new StartupParameters(url, crawlerCount, outputHtmlPath, outputFilePath);
+    }
 
-        return startupParameters;
+    private static void showStartupMessage(StartupParameters startupParameters) {
+        System.out.println("Scraping has started with the following properties:\n" +
+                "URL: "+startupParameters.getUrl()+"\n" +
+                "WORKER COUNT: "+startupParameters.getWorkerCount()+"\n" +
+                "Output text file"+startupParameters.getOutputFilePath()+"\n" +
+                "Output html web graph visualisation: "+startupParameters.getOutputHtmlPath()+"\n" +
+                "Scraping in progress, please wait...\n" +
+                "\n");
+    }
+
+    private static void writeOutput(OutputWriter writer, SiteMap siteMap, StartupParameters startupParameters) throws FileNotFoundException, UnsupportedEncodingException {
+        writer.writeSiteMapToConsole(siteMap);
+        writer.writeSiteMapToFile(siteMap, startupParameters.getOutputFilePath());
+        writer.generateVisualWebGraph(siteMap, startupParameters.getOutputHtmlPath());
     }
 }
